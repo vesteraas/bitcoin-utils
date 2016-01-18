@@ -1,0 +1,34 @@
+{
+  "name": "bitcoin-utils",
+  "version": "0.0.1",
+  "description": "Some useful Bitcoin Core command wrappers",
+  "main": "src/index.js",
+  "scripts": {
+    "integration": "mocha test/integration/",
+    "standard": "standard",
+    "unit": "mocha",
+    "test": "npm run standard && npm run unit"
+  },
+  "author": "Werner Kvalem Vesterås <wvesteraas@gmail.com>",
+  "license": {
+    "type": "MIT",
+    "url": "http://opensource.org/licenses/MIT"
+  },
+  "keywords": [
+    "Bitcoin",
+    "Core"
+  ],
+  "bugs": {
+    "url": "https://github.com/vesteraas/bitcoin-utils/issues"
+  },
+  "homepage": "https://github.com/vesteraas/bitcoin-utils#readme",
+  "dependencies": {
+    "bitcoin": "3.0.1",
+    "async": "1.5.2",
+    "underscore": "1.8.3"
+  },
+  "devDependencies": {
+    "mocha": "2.3.4",
+    "standard": "5.4.1"
+  }
+}
