@@ -1,66 +1,105 @@
 var bitcoin = require('bitcoin')
 var async = require('async')
 var _ = require('underscore')
+var validator = require('validator')
 
-function Utils(host, port, user, password, timeout) {
-  this.client = new bitcoin.Client({
-    host: host,
-    port: port,
-    user: user,
-    pass: password,
-    timeout: timeout
-  })
+function Utils (options) {
+  if (!options) {
+    throw new Error('options object is missing')
+  }
+
+  if (typeof options !== 'object') {
+    throw new Error('options parameter should be an object')
+  }
+
+  if (!options.host) {
+    throw new Error('options.url parameter is missing')
+  }
+
+  if (!validator.isURL(options.host)) {
+    throw new Error('options.host parameter is not a valid URL')
+  }
+
+  if (options.port === undefined) {
+    throw new Error('options.port parameter is missing')
+  }
+
+  if (!validator.isInt(options.port)) {
+    throw new Error('options.port parameter should be an integer')
+  }
+
+  if (!(typeof options.user === 'string' || options.user instanceof String)) {
+    throw new Error('options.user parameter should be a string')
+  }
+
+  if (!validator.isInt(options.port)) {
+    throw new Error('options.port parameter should be an integer')
+  }
+
+  if (!(typeof options.pass === 'string' || options.pass instanceof String)) {
+    throw new Error('options.pass parameter should be a string')
+  }
+
+  if (options.timeout === undefined) {
+    throw new Error('options.timeout parameter is missing')
+  }
+
+  if (!validator.isInt(options.timeout)) {
+    throw new Error('options.timeout parameter should be an integer')
+  }
+
+  this.client = new bitcoin.Client(options)
 }
 
 Utils.prototype.getUnspentOutputs = function (amount, callback) {
   var that = this
   async.waterfall([
-      function (callback) {
-        that.client.cmd('listunspent', function (err, unspents, resHeaders) {
+    function (callback) {
+      that.client.cmd('listunspent', function (err, unspents, resHeaders) {
+        if (err) {
+          return callback(err)
+        }
+
+        var total = 0
+
+        var result = []
+        _.each(unspents, function (unspent) {
+          if (unspent.spendable) {
+            if (total < unspent.amount) {
+              result.push({hash: unspent.txid, index: unspent.vout, amount: unspent.amount, address: unspent.address})
+              total += unspent.amount
+            }
+          }
+        })
+        if (result.length > 0) {
+          callback(null, result)
+        } else {
+          callback(new Error('No spendable outputs'))
+        }
+      })
+    }, function (unspents, callback) {
+      async.each(unspents, function (unspent, callback) {
+        that.client.cmd('dumpprivkey', unspent.address, function (err, key, resHeaders) {
           if (err) {
             return callback(err)
           }
 
-          var total = 0
+          unspent.privateKey = key
 
-          var result = []
-          _.each(unspents, function (unspent) {
-            if (unspent.spendable) {
-              if (total < unspent.amount) {
-                result.push({hash: unspent.txid, index: unspent.vout, amount: unspent.amount, address: unspent.address})
-                total += unspent.amount
-              }
-            }
-          })
-          if (result.length > 0) {
-            callback(null, result)
-          } else {
-            callback(new Error('No spendable outputs'))
-          }
+          callback(null, unspent)
         })
-      }, function (unspents, callback) {
-        async.each(unspents, function (unspent, callback) {
-          that.client.cmd('dumpprivkey', unspent.address, function (err, key, resHeaders) {
-            if (err) {
-              return callback(err)
-            }
-
-            unspent.privateKey = key
-
-            callback(null, unspent)
-          })
-        }, function (err) {
-          if (err) {
-            callback(err)
-          } else {
-            callback(null, unspents)
-          }
-        })
-      }
-    ],
-    function (err, result) {
-      callback(err, result)
-    })
+      }, function (err) {
+        if (err) {
+          callback(err)
+        } else {
+          callback(null, unspents)
+        }
+      })
+    }
+  ],
+  function (err, result) {
+    callback(err, result)
+  })
 }
 
 Utils.prototype.getNewAddress = function (callback) {
@@ -69,32 +108,32 @@ Utils.prototype.getNewAddress = function (callback) {
   var result = {}
 
   async.waterfall([
-      function (callback) {
-        that.client.cmd('getnewaddress', function (err, address, resHeaders) {
-          if (err) {
-            return callback(err)
-          }
+    function (callback) {
+      that.client.cmd('getnewaddress', function (err, address, resHeaders) {
+        if (err) {
+          return callback(err)
+        }
 
-          result.address = address
+        result.address = address
 
-          callback(err, result)
-        })
-      },
-      function (result, callback) {
-        that.client.cmd('dumpprivkey', result.address, function (err, key, resHeaders) {
-          if (err) {
-            return callback(err)
-          }
+        callback(err, result)
+      })
+    },
+    function (result, callback) {
+      that.client.cmd('dumpprivkey', result.address, function (err, key, resHeaders) {
+        if (err) {
+          return callback(err)
+        }
 
-          result.key = key
+        result.key = key
 
-          callback(null, result)
-        })
-      }
-    ],
-    function (err, result) {
-      callback(err, result)
-    })
+        callback(null, result)
+      })
+    }
+  ],
+  function (err, result) {
+    callback(err, result)
+  })
 }
 
 Utils.prototype.sendRawTransaction = function (raw, callback) {
