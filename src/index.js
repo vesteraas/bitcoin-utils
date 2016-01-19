@@ -65,7 +65,7 @@ Utils.prototype.getUnspentOutputs = function (amount, callback) {
         var result = []
         _.each(unspents, function (unspent) {
           if (unspent.spendable) {
-            if (total < unspent.amount) {
+            if (total < amount) {
               result.push({hash: unspent.txid, index: unspent.vout, amount: unspent.amount, address: unspent.address})
               total += unspent.amount
             }
