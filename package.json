@@ -1,6 +1,6 @@
 {
   "name": "bitcoin-utils",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Some useful Bitcoin Core command wrappers",
   "main": "src/index.js",
   "scripts": {
@@ -14,6 +14,10 @@
     "type": "MIT",
     "url": "http://opensource.org/licenses/MIT"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vesteraas/bitcoin-utils.git"
+  },
   "keywords": [
     "Bitcoin",
     "Core"
@@ -21,7 +25,6 @@
   "bugs": {
     "url": "https://github.com/vesteraas/bitcoin-utils/issues"
   },
-  "homepage": "https://github.com/vesteraas/bitcoin-utils#readme",
   "dependencies": {
     "bitcoin": "3.0.1",
     "async": "1.5.2",
