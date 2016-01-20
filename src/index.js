@@ -4,7 +4,7 @@ var _ = require('underscore')
 var validator = require('validator')
 
 function Utils (options) {
-  if (options === undefined) {
+  if (!options) {
     throw new Error('options object is missing')
   }
 
@@ -12,7 +12,7 @@ function Utils (options) {
     throw new Error('options parameter should be an object')
   }
 
-  if (options.host === undefined) {
+  if (!options.host) {
     throw new Error('options.url parameter is missing')
   }
 
@@ -28,16 +28,12 @@ function Utils (options) {
     throw new Error('options.port parameter should be an integer')
   }
 
-  if (options.user === undefined) {
-    throw new Error('options.user parameter is missing')
-  }
-
   if (!(typeof options.user === 'string' || options.user instanceof String)) {
     throw new Error('options.user parameter should be a string')
   }
 
-  if (options.pass === undefined) {
-    throw new Error('options.pass parameter is missing')
+  if (!validator.isInt(options.port)) {
+    throw new Error('options.port parameter should be an integer')
   }
 
   if (!(typeof options.pass === 'string' || options.pass instanceof String)) {
@@ -56,22 +52,6 @@ function Utils (options) {
 }
 
 Utils.prototype.getUnspentOutputs = function (amount, callback) {
-  if (amount === undefined) {
-    throw new Error('amount parameter is missing')
-  }
-
-  if (!validator.isInt(amount)) {
-    throw new Error('amount parameter should be an integer')
-  }
-
-  if (callback === undefined) {
-    throw new Error('callback parameter is missing')
-  }
-
-  if (typeof callback !== 'function') {
-    throw new Error('callback parameter should be a function')
-  }
-
   var that = this
   async.waterfall([
     function (callback) {
@@ -80,13 +60,42 @@ Utils.prototype.getUnspentOutputs = function (amount, callback) {
           return callback(err)
         }
 
-        var total = 0
+        var toSpend = []
+        var remaining = amount
+
+        var filtered = unspents.filter(function (value) {
+          var itemVal = (typeof value === 'object') ? value['amount'] : null
+          if (!isNaN(itemVal) && itemVal > 0 && itemVal <= amount) {
+            return true
+          } else {
+            return false
+          }
+        })
+
+        filtered.sort(function (a, b) {
+          return a['amount'] < b['amount']
+        })
+
+        for (var i = 0; i < filtered.length; i++) {
+          var value = filtered[i]['amount']
+
+          if ((remaining - value) >= 0) {
+            remaining = remaining - value
+
+            toSpend.push(filtered[i])
+            delete filtered[i]
+
+            if (remaining <= 0) {
+              break
+            }
+          }
+        }
 
         var result = []
-        _.each(unspents, function (unspent) {
-          if (unspent.spendable && (total < amount)) {
-            result.push({hash: unspent.txid, index: unspent.vout, amount: unspent.amount * 100000000, address: unspent.address})
-            total += unspent.amount * 100000000
+
+        _.each(toSpend, function (unspent) {
+          if (unspent.spendable) {
+            result.push({hash: unspent.txid, index: unspent.vout, amount: unspent.amount, address: unspent.address})
           }
         })
         if (result.length > 0) {
@@ -121,14 +130,6 @@ Utils.prototype.getUnspentOutputs = function (amount, callback) {
 }
 
 Utils.prototype.getNewAddress = function (callback) {
-  if (callback === undefined) {
-    throw new Error('callback parameter is missing')
-  }
-
-  if (typeof callback !== 'function') {
-    throw new Error('callback parameter should be a function')
-  }
-
   var that = this
 
   var result = {}
@@ -157,28 +158,12 @@ Utils.prototype.getNewAddress = function (callback) {
       })
     }
   ],
-  function (err, result) {
-    callback(err, result)
-  })
+    function (err, result) {
+      callback(err, result)
+    })
 }
 
 Utils.prototype.sendRawTransaction = function (raw, callback) {
-  if (raw === undefined) {
-    throw new Error('raw parameter is missing')
-  }
-
-  if (!(typeof raw === 'string' || raw instanceof String)) {
-    throw new Error('raw parameter should be a string')
-  }
-
-  if (callback === undefined) {
-    throw new Error('callback parameter is missing')
-  }
-
-  if (typeof callback !== 'function') {
-    throw new Error('callback parameter should be a function')
-  }
-
   this.client.cmd('sendrawtransaction', raw, function (err, hash, resHeaders) {
     if (err) {
       return callback(err)
