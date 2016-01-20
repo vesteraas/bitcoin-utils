@@ -1,6 +1,9 @@
 # bitcoin-utils
 
 ## Usage
+The **```getNewAddress()```** function returns a new address with its corresponding private key.
+
+The **```getUnspentOutputs()```** function returns an array containing unspents outputs where the total amount is less than or equal to the given amount.  If no input with a value less than or equal to the given amount is found, an empty array is returned.
 
 All amounts are in satoshis.
 

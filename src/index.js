@@ -52,6 +52,24 @@ function Utils (options) {
 }
 
 Utils.prototype.getUnspentOutputs = function (amount, callback) {
+  if (amount === undefined) {
+    return callback(new Error('amount parameter is missing'))
+  }
+
+  if (!(typeof amount === 'number')) {
+    return callback(new Error('amount parameter should be a numeric value'))
+  }
+
+  if (!callback) {
+    throw new Error('callback parameter is missing')
+  }
+
+  if (typeof callback !== 'function') {
+    throw new Error('callback parameter should be a function')
+  }
+
+  var amountsInBitcoin = amount / 100000000
+
   var that = this
   async.waterfall([
     function (callback) {
@@ -61,11 +79,11 @@ Utils.prototype.getUnspentOutputs = function (amount, callback) {
         }
 
         var toSpend = []
-        var remaining = amount
+        var remaining = amountsInBitcoin
 
         var filtered = unspents.filter(function (value) {
           var itemVal = (typeof value === 'object') ? value['amount'] : null
-          if (!isNaN(itemVal) && itemVal > 0 && itemVal <= amount) {
+          if (!isNaN(itemVal) && itemVal > 0 && itemVal <= amountsInBitcoin) {
             return true
           } else {
             return false
