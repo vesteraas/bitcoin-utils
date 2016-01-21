@@ -116,11 +116,8 @@ Utils.prototype.getUnspentOutputs = function (amount, callback) {
             result.push({hash: unspent.txid, index: unspent.vout, amount: unspent.amount, address: unspent.address})
           }
         })
-        if (result.length > 0) {
-          callback(null, result)
-        } else {
-          callback(new Error('No spendable outputs'))
-        }
+
+        callback(null, result)
       })
     }, function (unspents, callback) {
       async.each(unspents, function (unspent, callback) {
