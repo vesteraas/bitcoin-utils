@@ -113,7 +113,7 @@ Utils.prototype.getUnspentOutputs = function (amount, callback) {
 
         _.each(toSpend, function (unspent) {
           if (unspent.spendable) {
-            result.push({hash: unspent.txid, index: unspent.vout, amount: unspent.amount, address: unspent.address})
+            result.push({hash: unspent.txid, index: unspent.vout, amount: unspent.amount * 100000000, address: unspent.address})
           }
         })
 
